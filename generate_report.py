@@ -189,18 +189,15 @@ def generate_report():
     add_image_box(doc, os.path.join(IMG_DIR, "struct.png"), "Рис. 3. Структурна схема програми LABA-10.1a", width_inches=6.2)
     add_p(doc, "Опис архітектури та підпрограм:")
 
-    add_p(doc, '• Головний модуль (LABA-10.1a.cpp): зчитує кількість студентів N, виділяє динамічний масив Student* p = new Student[N], послідовно викликає Create(), Print(), CountPhysicsGrades(), CountPhysicsMathHighGrades(), виводить результати та звільняє пам’ять delete[] p.')
-    add_p(doc, '• Заголовний файл (student.h): містить визначення переліку enum Specialnist, структури Student рівня А та прототипи всіх 4 функцій.')
-    add_p(doc, '• Файл реалізації (student.cpp): реалізує введення з клавіатури Create(), табличний вивід у 7 колонок Print(), підрахунок оцінок з фізики CountPhysicsGrades(p, N, c5, c4, c3) та підрахунок студентів із високими оцінками з фізики й математики CountPhysicsMathHighGrades(p, N).')
+    add_p(doc, '• Головний блок main(): запитує кількість студентів N (із перевіркою N > 0), динамічно виділяє масив Student* p = new Student[N], викликає підпрограми Create(), Print(), CountPhysicsGrades(), CountPhysicsMathHighGrades(), виводить результати та звільняє пам’ять delete[] p.')
+    add_p(doc, '• Create(p, N): почергово зчитує дані кожного студента з валідацією курсу (1–6), спеціальності (0–4) та оцінок (2–5).')
+    add_p(doc, '• Print(p, N): формує відформатовану таблицю з 7 колонок (№, Прізвище, Курс, Спеціальність, Фізика, Математика, Інформатика).')
+    add_p(doc, '• CountPhysicsGrades(p, N, c5, c4, c3) та CountPhysicsMathHighGrades(p, N): обчислюють кількість оцінок «5», «4», «3» з фізики та кількість студентів з оцінками «4» або «5» одночасно з фізики і математики.')
 
     # --- 4. ТЕКСТ ПРОГРАМИ ---
     add_h(doc, "4. Текст програми", level=1)
 
-    add_h(doc, '4.1. Заголовний файл student.h', level=2)
-    add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\student.h'))
-    add_h(doc, '4.2. Файл реалізації student.cpp', level=2)
-    add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\student.cpp'))
-    add_h(doc, '4.3. Головний файл LABA-10.1a.cpp', level=2)
+    add_h(doc, '4.1. Текст програми LABA-10.1a.cpp', level=2)
     add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\LABA-10.1a.cpp'))
 
     # --- 5. МОДУЛЬНЕ ТЕСТУВАННЯ ---

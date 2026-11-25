@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CppUnitTest.h"
-#include "../LABA-10.1a/student.h"
+#define UNIT_TEST
+#include "../LABA-10.1a/LABA-10.1a.cpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -12,16 +13,14 @@ namespace UnitTest101a
         TEST_METHOD(TestCountPhysicsGrades)
         {
             const int N = 4;
-            Student students[N] = {
-                { "Коваленко", 1, KOMP_NAUKY, 5, 5, 5 },
-                { "Іваненко",  2, INFORMATYKA, 4, 4, 4 },
-                { "Петренко",  1, MAT_EKON,    3, 5, 4 },
-                { "Сидоренко", 3, FIZ_INF,     5, 3, 5 }
+            Student p[N] = {
+                { "Kovalenko", 1, KN,  5, 5, 5 },
+                { "Ivanenko",  2, INF, 4, 4, 4 },
+                { "Petrenko",  1, ME,  3, 5, 4 },
+                { "Sydorenko", 3, FI,  5, 3, 5 }
             };
-
             int c5 = 0, c4 = 0, c3 = 0;
-            CountPhysicsGrades(students, N, c5, c4, c3);
-
+            CountPhysicsGrades(p, N, c5, c4, c3);
             Assert::AreEqual(2, c5);
             Assert::AreEqual(1, c4);
             Assert::AreEqual(1, c3);
@@ -30,15 +29,13 @@ namespace UnitTest101a
         TEST_METHOD(TestCountPhysicsMathHighGrades)
         {
             const int N = 4;
-            Student students[N] = {
-                { "Коваленко", 1, KOMP_NAUKY, 5, 5, 5 }, // 5, 5 -> YES
-                { "Іваненко",  2, INFORMATYKA, 4, 4, 4 }, // 4, 4 -> YES
-                { "Петренко",  1, MAT_EKON,    3, 5, 4 }, // 3, 5 -> NO (physics is 3)
-                { "Сидоренко", 3, FIZ_INF,     5, 3, 5 }  // 5, 3 -> NO (math is 3)
+            Student p[N] = {
+                { "Kovalenko", 1, KN,  5, 5, 5 },
+                { "Ivanenko",  2, INF, 4, 4, 4 },
+                { "Petrenko",  1, ME,  3, 5, 4 },
+                { "Sydorenko", 3, FI,  5, 3, 5 }
             };
-
-            int highCount = CountPhysicsMathHighGrades(students, N);
-            Assert::AreEqual(2, highCount);
+            Assert::AreEqual(2, CountPhysicsMathHighGrades(p, N));
         }
     };
 }
