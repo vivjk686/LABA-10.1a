@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-from docx import Document
+import docx
 from docx.shared import Pt, Inches, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
-
-BASE_DIR = r"C:\Users\User\OneDrive\Документи\лаби\LABA-10.1a"
-IMG_DIR = os.path.join(BASE_DIR, "images")
-OUT_DOCX = os.path.join(BASE_DIR, "АП_РІ-13_Шах_ЛР-10.1а.docx")
 
 def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
     tcPr = cell._element.get_or_add_tcPr()
@@ -21,16 +17,31 @@ def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
         tcMar.append(node)
     tcPr.append(tcMar)
 
-def set_cell_shading(cell, color_hex="F8F9FA"):
+def set_cell_shading(cell, color_hex="F4F6F8"):
     shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>')
     cell._element.get_or_add_tcPr().append(shading_elm)
 
-def add_p(doc, text="", bold=False, italic=False, size=12, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6, space_before=0):
+def set_table_borders(table, color="D3D3D3", sz="4", val="single"):
+    tblPr = table._element.xpath('w:tblPr')
+    if tblPr:
+        borders = parse_xml(
+            f'<w:tblBorders {nsdecls("w")}>\n'
+            f'  <w:top w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>\n'
+            f'  <w:bottom w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>\n'
+            f'  <w:insideH w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>\n'
+            f'  <w:insideV w:val="none"/>\n'
+            f'  <w:left w:val="none"/>\n'
+            f'  <w:right w:val="none"/>\n'
+            f'</w:tblBorders>'
+        )
+        tblPr[0].append(borders)
+
+def add_p(doc, text="", bold=False, italic=False, size=12, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6, space_before=0, line_spacing=1.15):
     p = doc.add_paragraph()
     p.alignment = align
     p.paragraph_format.space_after = Pt(space_after)
     p.paragraph_format.space_before = Pt(space_before)
-    p.paragraph_format.line_spacing = 1.15
+    p.paragraph_format.line_spacing = line_spacing
     if text:
         r = p.add_run(text)
         r.bold = bold
@@ -40,17 +51,23 @@ def add_p(doc, text="", bold=False, italic=False, size=12, align=WD_ALIGN_PARAGR
         r.font.color.rgb = RGBColor(0, 0, 0)
     return p
 
-def add_h(doc, text):
+def add_h(doc, text, level=1):
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.keep_with_next = True
-    p.paragraph_format.space_before = Pt(12)
-    p.paragraph_format.space_after = Pt(6)
     r = p.add_run(text)
     r.bold = True
     r.font.name = 'Times New Roman'
-    r.font.size = Pt(14)
-    r.font.color.rgb = RGBColor(0, 0, 0)
+    r.font.color.rgb = RGBColor(0, 51, 102)
+    if level == 1:
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.space_before = Pt(14)
+        p.paragraph_format.space_after = Pt(6)
+        r.font.size = Pt(14)
+    elif level == 2:
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.space_before = Pt(10)
+        p.paragraph_format.space_after = Pt(4)
+        r.font.size = Pt(12.5)
     return p
 
 def add_code_block(doc, code_text):
@@ -59,14 +76,14 @@ def add_code_block(doc, code_text):
     cell = tbl.cell(0, 0)
     cell.width = Inches(6.5)
     set_cell_shading(cell, "F8F9FA")
-    set_cell_margins(cell, top=100, bottom=100, left=140, right=140)
+    set_cell_margins(cell, top=120, bottom=120, left=180, right=180)
     tcPr = cell._element.get_or_add_tcPr()
     tcBorders = parse_xml(
         f'<w:tcBorders {nsdecls("w")}>\n'
-        f'  <w:left w:val="single" w:sz="12" w:space="0" w:color="333333"/>\n'
-        f'  <w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>\n'
-        f'  <w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>\n'
-        f'  <w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>\n'
+        f'  <w:left w:val="single" w:sz="18" w:space="0" w:color="003366"/>\n'
+        f'  <w:top w:val="single" w:sz="4" w:space="0" w:color="E0E0E0"/>\n'
+        f'  <w:right w:val="single" w:sz="4" w:space="0" w:color="E0E0E0"/>\n'
+        f'  <w:bottom w:val="single" w:sz="4" w:space="0" w:color="E0E0E0"/>\n'
         f'</w:tcBorders>'
     )
     tcPr.append(tcBorders)
@@ -75,107 +92,150 @@ def add_code_block(doc, code_text):
     p.paragraph_format.space_after = Pt(0)
     p.paragraph_format.line_spacing = 1.05
     r = p.add_run(code_text)
-    r.font.name = 'Courier New'
-    r.font.size = Pt(10)
-    r.font.color.rgb = RGBColor(0, 0, 0)
+    r.font.name = 'Consolas'
+    r.font.size = Pt(9.5)
+    r.font.color.rgb = RGBColor(30, 30, 30)
     add_p(doc, "", space_after=4)
 
-def add_img(doc, path, caption):
-    if os.path.exists(path):
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(6)
-        p.paragraph_format.space_after = Pt(2)
-        p.add_run().add_picture(path, width=Inches(5.5))
-        add_p(doc, caption, italic=True, size=11, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=8)
+def add_image_box(doc, img_path, caption, width_inches=6.0):
+    if os.path.exists(img_path):
+        p_img = doc.add_paragraph()
+        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_img.paragraph_format.space_before = Pt(8)
+        p_img.paragraph_format.space_after = Pt(4)
+        run_img = p_img.add_run()
+        run_img.add_picture(img_path, width=Inches(width_inches))
+        p_cap = doc.add_paragraph()
+        p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_cap.paragraph_format.space_before = Pt(2)
+        p_cap.paragraph_format.space_after = Pt(10)
+        r_cap = p_cap.add_run(caption)
+        r_cap.font.name = 'Times New Roman'
+        r_cap.font.size = Pt(10)
+        r_cap.italic = True
+        r_cap.font.color.rgb = RGBColor(80, 80, 80)
 
-def read_txt(rel_path):
-    with open(os.path.join(BASE_DIR, rel_path), "r", encoding="utf-8") as f:
+def read_txt(base_dir, rel_path):
+    with open(os.path.join(base_dir, rel_path), "r", encoding="utf-8") as f:
         return f.read().rstrip()
 
+BASE_DIR = r"C:\Users\User\OneDrive\Документи\лаби\LABA-10.1a"
+IMG_DIR = os.path.join(BASE_DIR, "images")
+OUT_DOCX = os.path.join(BASE_DIR, "АП_РІ-13_Шах_ЛР-10.1а.docx")
+
 def generate_report():
-    doc = Document()
+    doc = docx.Document()
     for section in doc.sections:
         section.top_margin = Cm(2)
         section.bottom_margin = Cm(2)
-        section.left_margin = Cm(2)
-        section.right_margin = Cm(2)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(1.5)
 
-    # Титульна сторінка
-    add_p(doc, "", space_after=60)
-    title_text = (
-        "ЗВІТ\n"
-        "про виконання лабораторної роботи № 10.1a\n"
-        "«Масиви структур та об'єднань»\n"
-        "з дисципліни\n"
-        "«Алгоритмізація та програмування»\n\n"
-        "студента групи РІ-13\n"
-        "Шаха Владислава Ігоровича"
-    )
-    add_p(doc, title_text, bold=True, size=14, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=12)
-    add_p(doc, "", space_after=60)
-    add_p(doc, "Варіант № 32", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=12)
+    # --- ТИТУЛЬНА СТОРІНКА ---
+    add_p(doc, "МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_p(doc, "НАЦІОНАЛЬНИЙ УНІВЕРСИТЕТ «ЛЬВІВСЬКА ПОЛІТЕХНІКА»", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_p(doc, "Кафедра інформаційних систем та мереж", bold=False, italic=True, size=11, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=36)
+
+    add_p(doc, "ЗВІТ", bold=True, size=20, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
+    add_p(doc, 'про виконання лабораторної роботи № 10.1а', bold=True, size=14, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_p(doc, '«Послідовний пошук в масиві структур (Рівень А)»', bold=True, size=15, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_p(doc, "з дисципліни", bold=False, italic=True, size=11, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_p(doc, "«Алгоритмізація та програмування»", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=50)
+
+    info_tbl = doc.add_table(rows=2, cols=2)
+    info_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    info_tbl.columns[0].width = Inches(3.2)
+    info_tbl.columns[1].width = Inches(3.2)
+
+    c0 = info_tbl.cell(0, 1)
+    p0 = c0.paragraphs[0]
+    p0.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    r0 = p0.add_run("Виконав:\nстудент групи РІ-13\nШах Владислав Ігорьович\nВаріант № 32")
+    r0.font.name = 'Times New Roman'
+    r0.font.size = Pt(12)
+
+    c1 = info_tbl.cell(1, 1)
+    p1 = c1.paragraphs[0]
+    p1.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    r1 = p1.add_run("Прийняв:\nГригорович В.Г.")
+    r1.font.name = 'Times New Roman'
+    r1.font.size = Pt(12)
+
+    add_p(doc, "", space_after=80)
+    add_p(doc, "Львів – 2026", bold=False, size=11, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=0)
     doc.add_page_break()
 
-    # 1. Мета роботи
-    add_h(doc, "1. Мета роботи")
-    add_p(doc, "Метою лабораторної роботи є набуття практичних навичок визначення і використання структур даних (struct), переліків (enum) та об'єднань (union) у мові програмування С++. Вивчення способів оголошення масивів структур, звернення до полів структур, а також реалізації підпрограм обробки масивів структур.")
+    # --- 1. МЕТА ТА ТЕОРЕТИЧНІ ВІДОМОСТІ ---
+    add_h(doc, "1. Мета роботи та теоретичні відомості", level=1)
+    add_p(doc, 'Мета роботи: навчитися опрацьовувати динамічні масиви структур у мові C++, використовувати перелічувані типи (enum) для представлення категоріальних даних, формувати форматований табличний вивід та реалізовувати алгоритми послідовного пошуку окремими функціями без використання глобальних змінних.')
+    add_h(doc, "Теоретичні положення:", level=2)
 
-    # 2. Завдання
-    add_h(doc, "2. Завдання")
-    add_img(doc, os.path.join(IMG_DIR, "task.png"), "Рис. 1. Умова лабораторної роботи № 10.1а (Варіант 32)")
+    add_p(doc, '1. Перелічувані типи (enum): дозволяють задавати іменовані цілочисельні константи для обмеженого набору значень (у нашій задачі — спеціальності студентів: KOMP_NAUKY, INFORMATYKA, MAT_EKON, FIZ_INF, TRUD_NAVCH). Це робить код читабельним та захищає від помилкових числових кодів.')
+    add_p(doc, '2. Структури (struct) рівня А: об’єднують різнорідні поля студента (prizv, kurs, spec, physics, math, it) в один користувацький тип Student. Пам’ять під динамічний масив виділяється під час виконання програми через new Student[N].')
+    add_p(doc, '3. Модульна декомпозиція та передача параметрів: згідно з вимогами лабораторної роботи, глобальні змінні не використовуються — усі дані передаються через параметри функцій. Підпрограми обчислень не друкують результат у консоль, а повертають його у функцію main() через return або параметри-посилання (&).')
 
-    # 3. Алгоритм розв'язання
-    add_h(doc, "3. Алгоритм розв'язання")
-    add_p(doc, "1. Оголошено перелік enum Specialnist (KOMP_NAUKY, INFORMATYKA, MAT_EKON, FIZ_INF, TRUD_NAVCH) та масив рядків specialnistStr для текстового відображення спеціальності.")
-    add_p(doc, "2. Описано структуру Student рівня А, що містить поля: prizv (прізвище студента, std::string), kurs (номер курсу, unsigned), spec (спеціальність, Specialnist), physics, math, it (цілочисельні оцінки з фізики, математики та інформатики).")
-    add_p(doc, "3. У функції main() користувач вводить кількість студентів N, після чого динамічно виділяється пам'ять під масив структур Student* p = new Student[N].")
-    add_p(doc, "4. Підпрограма Create(p, N) заповнює поля кожного елемента масиву з клавіатури; Print(p, N) виводить дані у вигляді відформатованої таблиці із 7 стовпців.")
-    add_p(doc, "5. Підпрограма CountPhysicsGrades(p, N, count5, count4, count3) у циклі підраховує кількість оцінок «5», «4» та «3» з фізики та повертає результати через параметри-посилання.")
-    add_p(doc, "6. Підпрограма CountPhysicsMathHighGrades(p, N) підраховує та повертає кількість студентів, у яких одночасно оцінка з фізики належить множині {4, 5} і оцінка з математики належить множині {4, 5}. Після виведення результатів пам'ять звільняється оператором delete[].")
+    # --- 2. УМОВА ЗАВДАННЯ ---
+    add_h(doc, "2. Умова завдання (Варіант № 32)", level=1)
+    add_p(doc, "Спільна частина завдання для всіх варіантів:")
+    add_p(doc, 'Сформувати динамічний масив структур рівня А (прізвище студента, курс, спеціальність як перелік enum, оцінки з фізики, математики, інформатики). Вивести масив у вигляді таблиці з 7 стовпців із заголовком і шапкою. Усі дії реалізувати окремими функціями без глобальних змінних.')
+    add_image_box(doc, os.path.join(IMG_DIR, "task_common.png"), "Рис. 1. Загальна умова лабораторної роботи № 10.1а з методичних вказівок", width_inches=6.0)
+    add_p(doc, "Індивідуальне завдання для Варіанта № 32 (стор. 57–58, 62):")
+    add_p(doc, '1) Обчислити кількість кожної з оцінок «5», «4», «3» з фізики.\n2) Обчислити кількість студентів, які отримали і з фізики, і з математики оцінки «4» або «5».')
+    add_image_box(doc, os.path.join(IMG_DIR, "task_var32.png"), "Рис. 2. Умова Варіанта № 32 з методичних вказівок", width_inches=6.0)
 
-    # 4. Лістинг програми
-    add_h(doc, "4. Лістинг програми")
-    add_p(doc, "Головний файл програми LABA-10.1a.cpp:", bold=True, space_after=4)
-    add_code_block(doc, read_txt(r"LABA-10.1a\LABA-10.1a.cpp"))
-    add_p(doc, "Заголовний файл student.h:", bold=True, space_after=4)
-    add_code_block(doc, read_txt(r"LABA-10.1a\student.h"))
-    add_p(doc, "Файл реалізації student.cpp:", bold=True, space_after=4)
-    add_code_block(doc, read_txt(r"LABA-10.1a\student.cpp"))
+    # --- 3. СТРУКТУРНА СХЕМА ПРОГРАМИ ---
+    add_h(doc, "3. Структурна схема програми", level=1)
+    add_p(doc, "Програма побудована за модульним принципом згідно з вимогами методичних вказівок викладача Григоровича В.Г. Інтерфейсна частина (.h), реалізація функцій (.cpp) та головна програма розділені:")
+    add_image_box(doc, os.path.join(IMG_DIR, "struct.png"), "Рис. 3. Структурна схема програми LABA-10.1a", width_inches=6.2)
+    add_p(doc, "Опис архітектури та підпрограм:")
 
-    # 5. Схема програми
-    add_h(doc, "5. Схема програми")
-    add_img(doc, os.path.join(IMG_DIR, "struct.png"), "Рис. 2. Структурна схема програми LABA-10.1a")
+    add_p(doc, '• Головний модуль (LABA-10.1a.cpp): зчитує кількість студентів N, виділяє динамічний масив Student* p = new Student[N], послідовно викликає Create(), Print(), CountPhysicsGrades(), CountPhysicsMathHighGrades(), виводить результати та звільняє пам’ять delete[] p.')
+    add_p(doc, '• Заголовний файл (student.h): містить визначення переліку enum Specialnist, структури Student рівня А та прототипи всіх 4 функцій.')
+    add_p(doc, '• Файл реалізації (student.cpp): реалізує введення з клавіатури Create(), табличний вивід у 7 колонок Print(), підрахунок оцінок з фізики CountPhysicsGrades(p, N, c5, c4, c3) та підрахунок студентів із високими оцінками з фізики й математики CountPhysicsMathHighGrades(p, N).')
 
-    # 6. Результати виконання програми
-    add_h(doc, "6. Результати виконання програми")
-    add_img(doc, os.path.join(IMG_DIR, "console_main.png"), "Рис. 3. Результат роботи основної програми у консолі")
-    add_img(doc, os.path.join(IMG_DIR, "console_test.png"), "Рис. 4. Результат виконання модульних тестів (vstest.console.exe)")
+    # --- 4. ТЕКСТ ПРОГРАМИ ---
+    add_h(doc, "4. Текст програми", level=1)
 
-    # 7. Контрольні запитання
-    add_h(doc, "7. Контрольні запитання")
-    qa = [
-        ("1. Що таке структура (struct) у C++ та для чого вона використовується?",
-         "Структура (struct) — це складений тип даних, що об'єднує під одним іменем логічно пов'язані поля різних типів. Вона використовується для опису комплексних об'єктів, наприклад запису про студента."),
-        ("2. Чим відрізняється перелік (enum) від звичайних цілочисельних констант?",
-         "Перелік enum створює новий іменований тип даних із обмеженим набором символічних констант, що підвищує читабельність коду та забезпечує суворішу типізацію порівняно з розрізненими числовими константами."),
-        ("3. Що таке об'єднання (union) і як воно зберігається в пам'яті?",
-         "Об'єднання (union) — це тип даних, усі поля якого розміщуються в одній і тій самій області пам'яті, тому розмір union визначається розміром його найбільшого поля, і в кожен момент часу коректно зберігається лише одне активне поле."),
-        ("4. Як виконується динамічне виділення та звільнення пам'яті для масиву структур?",
-         "Динамічний масив створюється оператором new Student[N], який повертає вказівник на перший елемент, а після завершення використання обов'язково звільняється оператором delete[]."),
-        ("5. Якими способами можна передавати масив структур у функцію та повертати кілька значень?",
-         "Масив структур передається у функцію через вказівник Student* або константний вказівник const Student* разом із розміром N. Кілька обчислених значень зручно повертати через параметри-посилання (наприклад, int& count5).")
-    ]
+    add_h(doc, '4.1. Заголовний файл student.h', level=2)
+    add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\student.h'))
+    add_h(doc, '4.2. Файл реалізації student.cpp', level=2)
+    add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\student.cpp'))
+    add_h(doc, '4.3. Головний файл LABA-10.1a.cpp', level=2)
+    add_code_block(doc, read_txt(BASE_DIR, 'LABA-10.1a\\LABA-10.1a.cpp'))
+
+    # --- 5. МОДУЛЬНЕ ТЕСТУВАННЯ ---
+    add_h(doc, "5. Модульне тестування (UnitTest10.1a)", level=1)
+    add_p(doc, 'Для перевірки коректності функцій обчислення розроблено проект модульного тестування UnitTest10.1a на базі Microsoft Native Unit Test Framework. Тести перевіряють функцію CountPhysicsGrades() (точний підрахунок оцінок 5, 4, 3 з фізики) та CountPhysicsMathHighGrades() (відбір студентів з оцінками ≥4 одночасно з фізики і математики).')
+    add_code_block(doc, read_txt(BASE_DIR, 'UnitTest10.1a\\UnitTest10.1a.cpp'))
+    add_p(doc, "Результати автоматизованого тестування (консольна утиліта vstest.console.exe):")
+    add_image_box(doc, os.path.join(IMG_DIR, "console_test.png"), "Рис. 4. Успішне проходження всіх модульних тестів проекту", width_inches=6.0)
+
+    # --- 6. РЕЗУЛЬТАТИ ВИКОНАННЯ ПРОГРАМИ ---
+    add_h(doc, "6. Результати виконання програми", level=1)
+    add_p(doc, 'Програму скомпільовано у конфігурації Debug x64 (0 помилок, 0 попереджень) та перевірено на тестовому наборі з 4 студентів: Коваленко (5, 5, 5), Іваненко (4, 4, 4), Петренко (3, 5, 4), Сидоренко (5, 3, 5). З фізики отримано: «5» — 2, «4» — 1, «3» — 1; оцінки «4» або «5» і з фізики, і з математики мають 2 студенти.')
+    add_image_box(doc, os.path.join(IMG_DIR, "console_main.png"), "Рис. 5. Консольне вікно виконання програми", width_inches=6.0)
+
+    # --- 7. ПОСИЛАННЯ НА GITHUB ---
+    add_h(doc, "7. Посилання на GitHub-репозиторій", level=1)
+    add_p(doc, "Вихідний програмний код, заголовочні файли, файли реалізації, проект Visual Studio, юніт-тести та звіт розміщені у віддаленому репозиторії GitHub:")
+    add_p(doc, 'https://github.com/vivjk686/LABA-10.1a', bold=True, size=12, align=WD_ALIGN_PARAGRAPH.LEFT)
+
+    # --- 8. ВІДПОВІДІ НА КОНТРОЛЬНІ ПИТАННЯ ---
+    add_h(doc, "8. Відповіді на контрольні питання", level=1)
+    qa = [('1. Загальний синтаксис оголошення масивів та переліків, структур і об’єднань.', 'Масив: тип ім’я[розмір]; (динамічний: тип* ім’я = new тип[N];). Перелік: enum [Ім’я] { елем1, елем2, ... };. Структура: struct [Ім’я] { тип1 поле1; тип2 поле2; ... };. Об’єднання: union [Ім’я] { тип1 поле1; тип2 поле2; ... }; (або анонімне об’єднання без імені типу всередині структури).'), ('2. Доступ до елементів масивів та переліків, структур і об’єднань.', 'До елемента масиву звертаються за індексом a[i]. Переліку присвоюються та порівнюються його нумератори (p[i].spec = KOMP_NAUKY). До полів структури чи об’єднання за іменем змінної звертаються через оператор крапка (s.prizv), а через вказівник — оператором стрілка (ps->prizv або (*ps).prizv). Для анонімного об’єднання в структурі доступ до полів прямий: p[i].programming.'), ('3. Дії з масивами та переліками, структурами і об’єднаннями.', 'З елементами масиву виконують перебір, пошук, сортування, обчислення агрегатів. Переліки можна порівнювати (==, !=, <, >) та використовувати у switch. Структури одного типу можна присвоювати (s1 = s2), передавати у функції за значенням, вказівником або посиланням. У об’єднанні в кожний момент часу актуальним є лише одне поле, що займає спільну область пам’яті.'), ('4. Ініціалізація масивів та переліків, структур і об’єднань.', 'Ініціалізація виконується списком у фігурних дужках у порядку оголошення полів: Student s = {"Коваленко", 1, KOMP_NAUKY, 5, 5, 5};. Для об’єднання при статичній ініціалізації можна задати значення лише першому полю. Незаповнені поля ініціалізуються нулями.'), ('5. Внутрішня реалізація масивів та переліків, структур і об’єднань.', 'Масив зберігається у неперервній ділянці пам’яті. Елементи переліку компілятор замінює на цілі константи (0, 1, 2, ...). Поля структури розміщуються послідовно в пам’яті з урахуванням вирівнювання (padding) по границі, кратній розміру типу. Поля об’єднання накладаються одне на одне з однієї адреси, а розмір об’єднання дорівнює розміру його найбільшого поля.'), ('6. Передавання та опрацювання масивів та структур у функціях.', 'Динамічний масив структур передається у функцію через вказівник на перший елемент та кількість елементів: void Print(const Student* p, const int N). Якщо функція не змінює дані, використовується модифікатор const. Для повернення кількох значень застосовуються параметри-посилання (int& count5, int& count4, int& count3).'), ('7. Загальний синтаксис оголошення та формування динамічних масивів.', 'Виділення пам’яті: Student* p = new Student[N];, де N вводиться під час виконання програми. Заповнення здійснюється у циклі for (int i = 0; i < N; i++). Після завершення роботи пам’ять обов’язково звільняється оператором delete[] p;.'), ('8. Загальна схема послідовного пошуку в масиві.', 'Послідовний (лінійний) пошук полягає у циклічному перегляді всіх елементів масиву від індексу 0 до N-1 та перевірці умови відбору для кожного елемента. У завданні 10.1 за один прохід перевіряється оцінка з фізики (для підрахунку «5», «4», «3») та одночасне виконання умови (physics >= 4 && math >= 4).')]
     for q, a in qa:
-        add_p(doc, q, bold=True, size=12, space_before=4, space_after=2)
-        add_p(doc, a, bold=False, size=12, space_before=0, space_after=6)
+        add_p(doc, q, bold=True, size=11, space_before=4, space_after=2)
+        add_p(doc, a, bold=False, size=11, space_before=0, space_after=6)
 
-    # 8. Висновки
-    add_h(doc, "8. Висновки")
-    add_p(doc, "Під час виконання лабораторної роботи № 10.1a було закріплено навички роботи зі структурами (struct), переліками (enum) та динамічними масивами структур у мові C++. Реалізовано окремі підпрограми введення, табличного виведення, підрахунку оцінок з фізики та аналізу успішності з фізики і математики. Коректність роботи функцій підтверджено проходженням модульних тестів у UnitTest10.1a.")
+    # --- 9. ВИСНОВКИ ---
+    add_h(doc, "9. Висновки", level=1)
+
+    add_p(doc, '1. Оголошено перелічуваний тип Specialnist та структуру Student рівня А для зберігання даних про студентів у динамічному масиві.')
+    add_p(doc, '2. Реалізовано окремі функції Create(), Print(), CountPhysicsGrades() та CountPhysicsMathHighGrades() із передачею параметрів без використання глобальних змінних.')
+    add_p(doc, '3. Розроблено автоматизовані модульні тести UnitTest10.1a (2/2 тестів пройдено успішно через vstest.console.exe), які підтвердили правильність обчислень для Варіанта № 32.')
 
     doc.save(OUT_DOCX)
-    print("Saved:", OUT_DOCX)
+    print("Report saved successfully:", OUT_DOCX)
 
 if __name__ == "__main__":
     generate_report()
